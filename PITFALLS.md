@@ -64,3 +64,15 @@ When extracting a standalone chapter, neutralize glue phrases that assume other 
 - 2.3节 / 后续章节 等跨章指向
 
 Only change **context**, not technical claims. Do **not** casually rewrite figure/table numbers in prose without going through SEQ/REF + caption bookmarks.
+
+## 11. Equation number must stay on the far right (TAB + OLE + TAB)
+
+Thesis「公式」paragraphs are almost always:
+
+```text
+[TAB] [MathType OLE or preview drawing] [TAB] [(2.21) or SEQ number]
+```
+
+Style tab stops center the equation and **right-align** the number. Wiping the whole paragraph (or appending a number without the second TAB) moves numbers off the right margin.
+
+**Fix:** When converting plain `(2.xx)` → SEQ `Eq`, delete/replace **only** the trailing number text run; keep both TABs and the OLE/drawing. Match the chapter-4 layout: `TAB | OLE | TAB | ( SEQ )`.

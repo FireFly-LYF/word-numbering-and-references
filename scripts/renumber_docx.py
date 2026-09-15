@@ -528,7 +528,14 @@ def make_eq_number_elems(bookmark_name: str, bookmark_id: int, display_num: int)
 
 
 def convert_plain_equations(root, start_num: int):
-    """Convert plain equation paragraphs into SEQ Eq captions."""
+    """Convert plain equation numbers into SEQ Eq captions.
+
+    CRITICAL: Chinese thesis formula paragraphs are typically:
+        [TAB] [MathType OLE / drawing] [TAB] [(2.21)]
+    with style「公式」tab stops centering the equation and right-aligning the number.
+    NEVER wipe the whole paragraph — only replace the trailing number text, keeping
+    tabs + OLE/drawing so the number stays on the far right.
+    """
     mapping = {}
     n = start_num
     for old in PLAIN_EQ_ORDER:
@@ -545,14 +552,39 @@ def convert_plain_equations(root, start_num: int):
             continue
         new_num = mapping[text]
         bm_name = f"Eq_{new_num}"
-        pPr = p.find(qn("pPr"))
+        old = text
+
+        # Remove only runs that carry the plain number text; keep tabs / OLE / drawings.
         for child in list(p):
-            if child is not pPr:
+            if child.tag == qn("pPr"):
+                continue
+            if child.tag != qn("r"):
+                continue
+            if child.find(qn("object")) is not None or child.find(qn("drawing")) is not None:
+                continue
+            if child.find(qn("pict")) is not None:
+                continue
+            # Pure tab run (no text) — keep for right-align layout
+            run_text = "".join(t.text or "" for t in child.findall(qn("t")))
+            has_tab = child.find(qn("tab")) is not None
+            if has_tab and not run_text.strip():
+                continue
+            if run_text.strip() == old or run_text.strip() in mapping:
                 p.remove(child)
+                continue
+            if old in run_text:
+                for t in child.findall(qn("t")):
+                    if t.text and old in t.text:
+                        t.text = t.text.replace(old, "")
+                # drop run if it became empty (no tab/object either)
+                if not "".join(t.text or "" for t in child.findall(qn("t"))).strip():
+                    if child.find(qn("tab")) is None:
+                        p.remove(child)
+
         for e in make_eq_number_elems(bm_name, next_id, new_num):
             p.append(e)
         next_id += 1
-        converted.append((text, f"({new_num})", bm_name))
+        converted.append((old, f"({new_num})", bm_name))
     return converted
 
 
