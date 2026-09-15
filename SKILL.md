@@ -3,9 +3,13 @@ name: word-numbering-and-references
 description: >-
   Renumbers Word docx figure/table/equation captions (SEQ fields), rebuilds
   cross-reference REF fields, strips duplicate mc:Fallback SEQ, and extracts
-  standalone thesis chapters with consistent numbering. Use when the user asks
-  about 题注, 交叉引用, 图表编号, 公式编号, docx numbering, SEQ/REF fields,
-  caption renumbering, or pulling a chapter out of a Chinese thesis Word file.
+  standalone thesis chapters with consistent numbering. Also covers MathType
+  formula layout: TAB+OLE+TAB right-aligned numbers, vertical centering of
+  equation numbers (baseline + lower OLE — never textAlignment=center), and
+  tab stops matched to page content width. Use when the user asks about 题注,
+  交叉引用, 图表编号, 公式编号, 公式编号居中/右对齐, docx numbering, SEQ/REF
+  fields, caption renumbering, or pulling a chapter out of a Chinese thesis
+  Word file.
 ---
 
 # Word numbering and cross-references
@@ -17,6 +21,7 @@ Private skill for **firefly-lyf**. Scripts live in `scripts/`. Hard pitfalls: re
 - Renumber 图/表/公式 after extracting a standalone chapter from a thesis
 - Fix broken or stale Word `REF` cross-references to caption bookmarks
 - Stop double-counted figure numbers caused by `mc:Choice` / `mc:Fallback` dual captions
+- Fix equation **number on the far right** and **vertically centered** vs tall MathType (no tables)
 - Never overwrite the source docx — always write `--dst`
 
 ## Required order
@@ -38,8 +43,9 @@ If `finalize_fields.py` runs without `--skip-strip`, step 3 is already done; sti
 4. After any `Fields.Update`, **re-strip Fallback SEQ** (see PITFALLS #1, #9).
 5. When replacing body text or inserting REF: only touch **plain (non-field) characters**; never collapse all `w:t` into one run (PITFALLS #3–#5).
 6. Cross-refs must be real `REF bookmark` fields with display matching caption format (`图5.1`, `式(37)` / `(37)`, etc.) — not plain number swaps (PITFALL #8).
-7. Run `verify_refs.py`; fix leftovers before declaring done.
-8. On failures, open [PITFALLS.md](PITFALLS.md) first — known broken patterns are documented there.
+7. Equation layout: keep `TAB|OLE|TAB|number` (PITFALL #11); vertical center via **baseline + lower OLE** — **never** `textAlignment=center` for MathType (PITFALL #12); tab stops = one center + one right at page content width (PITFALL #13).
+8. Run `verify_refs.py`; fix leftovers before declaring done.
+9. On failures, open [PITFALLS.md](PITFALLS.md) first — known broken patterns are documented there.
 
 ## Scripts
 
@@ -68,3 +74,4 @@ python scripts/verify_refs.py --src chapter_final.docx
 - `replace_text_in_para` / `_replace_span_with_ref`: plain-only char index; split left/right around mid-run matches.
 - Missing caption bookmarks: drop broken REF; neutralize awkward 「如所示」 wording — do not invent numbers.
 - Context phrases (上节 / 后续章节 / x.x节): neutralize only chapter-glue wording, not technical content.
+- Formula numbers: far-right via tabs (PITFALL #11/#13); vertical mid via baseline + OLE `w:position` lower (PITFALL #12) — no tables unless the user asks.

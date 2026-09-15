@@ -31,3 +31,10 @@ python scripts/verify_refs.py --src chapter_final.docx
 Edit `CONFIG` dicts at the top of `renumber_docx.py` before running (chapter maps, context phrase fixes, plain fig map).
 
 See [SKILL.md](SKILL.md) for agent workflow and [PITFALLS.md](PITFALLS.md) for known OOXML failure modes.
+
+## Formula number layout (MathType)
+
+- Keep `TAB | OLE | TAB | (n)` — do not wipe the paragraph when converting numbers (PITFALL #11).
+- **Vertical center:** use `textAlignment=baseline` and **lower the OLE** with `w:position`; do **not** use `textAlignment=center` (pins number to top) (PITFALL #12).
+- **Horizontal right:** one center tab + one right tab at page content width; avoid dual center tabs (PITFALL #13).
+- Prefer not to use tables for this layout unless the user explicitly asks.
